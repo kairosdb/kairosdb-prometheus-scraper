@@ -1,0 +1,9 @@
+# HELP go_gc_duration_seconds A summary of the GC invocation durations.
+# TYPE go_gc_duration_seconds summary
+go_gc_duration_seconds{instance="1.2.3.4",quantile="0"} 6.1708e-05
+go_gc_duration_seconds{instance="1.2.3.4",quantile="0.25"} 8.1063e-05
+go_gc_duration_seconds{instance="1.2.3.4",quantile="0.5"} 9.5992e-05
+go_gc_duration_seconds{instance="1.2.3.4",quantile="0.75"} 0.000127407
+go_gc_duration_seconds{instance="1.2.3.4",quantile="1"} 0.015248652
+go_gc_duration_seconds_sum 10.254398459
+go_gc_duration_seconds_count 52837
