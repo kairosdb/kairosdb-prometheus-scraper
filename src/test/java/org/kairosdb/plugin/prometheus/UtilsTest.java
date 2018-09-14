@@ -4,7 +4,7 @@ import org.junit.Test;
 import org.kairosdb.core.datastore.TimeUnit;
 
 import static org.hamcrest.Matchers.equalTo;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertThat;
 
 public class UtilsTest
 {
@@ -14,8 +14,5 @@ public class UtilsTest
 		assertThat(Utils.convertShortToLongUnit("s"), equalTo(TimeUnit.SECONDS));
 		assertThat(Utils.convertShortToLongUnit("m"), equalTo(TimeUnit.MINUTES));
 		assertThat(Utils.convertShortToLongUnit("h"), equalTo(TimeUnit.HOURS));
-		assertThat(Utils.convertShortToLongUnit("M"), equalTo(TimeUnit.MONTHS));
-		assertThat(Utils.convertShortToLongUnit("w"), equalTo(TimeUnit.WEEKS));
-		assertThat(Utils.convertShortToLongUnit("y"), equalTo(TimeUnit.YEARS));
 	}
 }

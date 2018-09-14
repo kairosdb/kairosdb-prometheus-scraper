@@ -18,14 +18,6 @@ public class Utils
 				return TimeUnit.MINUTES;
 			case "h":
 				return TimeUnit.HOURS;
-			case "d":
-				return TimeUnit.DAYS;
-			case "M":
-				return TimeUnit.MONTHS;
-			case "w":
-				return TimeUnit.WEEKS;
-			case "y":
-				return TimeUnit.YEARS;
 			default:
 				throw new IllegalArgumentException("Invalid time unit: " + shortUnit);
 		}
