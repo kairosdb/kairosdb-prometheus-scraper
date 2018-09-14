@@ -88,7 +88,6 @@ public class PrometheusServer implements KairosDBService
 				{
 					for (Metric metric : metricFamily.getMetrics())
 					{
-						System.out.println(metric.getName());
 						if (metricFamily.getType() == MetricType.SUMMARY)
 						{
 							Summary summary = (Summary) metric;
@@ -112,8 +111,10 @@ public class PrometheusServer implements KairosDBService
 						{
 							for (Bucket bucket : ((Histogram) metric).getBuckets())
 							{
-								addDataPoint(metric, bucket.getCumulativeCount(), "bucket", Double.toString(bucket.getUpperBound()));
+								addDataPoint(metric, metric.getName(), bucket.getCumulativeCount(), "le", Double.toString(bucket.getUpperBound()));
 							}
+							addDataPoint(metric, metric.getName() + "_sum", ((Histogram) metric).getSampleSum());
+							addDataPoint(metric, metric.getName() + "_count", ((Histogram) metric).getSampleCount());
 						}
 					}
 				}

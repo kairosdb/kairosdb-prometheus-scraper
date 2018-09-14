@@ -2,14 +2,12 @@ package org.kairosdb.plugin.prometheus;
 
 import com.google.common.collect.ImmutableSortedMap;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.kairosdb.core.datapoints.DoubleDataPoint;
 import org.kairosdb.eventbus.FilterEventBus;
 import org.kairosdb.eventbus.Publisher;
 import org.kairosdb.events.DataPointEvent;
 import org.mockito.ArgumentMatcher;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
 import java.net.InetAddress;
@@ -17,8 +15,6 @@ import java.net.MalformedURLException;
 import java.net.UnknownHostException;
 import java.util.Properties;
 
-import static org.junit.Assert.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.mockito.MockitoAnnotations.initMocks;
 
@@ -54,6 +50,7 @@ public class PrometheusServerTest
 
 		executor.execute();
 
+		// Quantiles
 		verify(mockPublisher).post(argThat(new DataPointEventMatcher(newDataPointEvent(
 				"go_gc_duration_seconds",
 				ImmutableSortedMap.of("instance", "1.2.3.4", "quantile", "0.0"),
@@ -78,6 +75,52 @@ public class PrometheusServerTest
 				"go_gc_duration_seconds_count",
 				ImmutableSortedMap.of(),
 				52837))));
+
+		// Guage
+		verify(mockPublisher).post(argThat(new DataPointEventMatcher(newDataPointEvent(
+				"go_goroutines",
+				ImmutableSortedMap.of(),
+				126))));
+
+		// Counter
+		verify(mockPublisher).post(argThat(new DataPointEventMatcher(newDataPointEvent(
+				"go_memstats_alloc_bytes_total",
+				ImmutableSortedMap.of(),
+				1.52575345048e+11))));
+
+		// Histogram
+		verify(mockPublisher).post(argThat(new DataPointEventMatcher(newDataPointEvent(
+				"http_request_duration_seconds",
+				ImmutableSortedMap.of("le", "0.05"),
+				24054))));
+		verify(mockPublisher).post(argThat(new DataPointEventMatcher(newDataPointEvent(
+				"http_request_duration_seconds",
+				ImmutableSortedMap.of("le", "0.1"),
+				33444))));
+		verify(mockPublisher).post(argThat(new DataPointEventMatcher(newDataPointEvent(
+				"http_request_duration_seconds",
+				ImmutableSortedMap.of("le", "0.2"),
+				100392))));
+		verify(mockPublisher).post(argThat(new DataPointEventMatcher(newDataPointEvent(
+				"http_request_duration_seconds",
+				ImmutableSortedMap.of("le", "0.5"),
+				129389))));
+		verify(mockPublisher).post(argThat(new DataPointEventMatcher(newDataPointEvent(
+				"http_request_duration_seconds",
+				ImmutableSortedMap.of("le", "1.0"),
+				133988))));
+		verify(mockPublisher).post(argThat(new DataPointEventMatcher(newDataPointEvent(
+				"http_request_duration_seconds",
+				ImmutableSortedMap.of("le", "Infinity"),
+				144320))));
+		verify(mockPublisher).post(argThat(new DataPointEventMatcher(newDataPointEvent(
+				"http_request_duration_seconds_sum",
+				ImmutableSortedMap.of(),
+				53423))));
+		verify(mockPublisher).post(argThat(new DataPointEventMatcher(newDataPointEvent(
+				"http_request_duration_seconds_count",
+				ImmutableSortedMap.of(),
+				144320))));
 	}
 
 	private DataPointEvent newDataPointEvent(String metricName, ImmutableSortedMap<String, String> tags, double dataPoint) throws UnknownHostException
