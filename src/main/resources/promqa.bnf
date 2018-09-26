@@ -1,0 +1,13 @@
+
+
+
+
+
+
+metricName
+	::= character+
+
+character
+    ::=  'A'..'Z'
+    |   '_'
+	|  'a'..'z'
