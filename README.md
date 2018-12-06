@@ -20,3 +20,6 @@ Clients that the server scrapes are specified in the configuration file. Each cl
 |----------|------------|
 |kairosdb.prometheus-server.client.[x].url| The client URL. The URL typically ends with "/metrics"|
  kairosdb.prometheus-server.client.[x].scrape-interval| How often to scrape the client for metrics. The time is specified as a number and a time unit. Time units are s=seconds, m=minutes, h=hours. For example: 30s.|
+ 
+ 
+ *Tested on KariosDB version 1.2.1*
