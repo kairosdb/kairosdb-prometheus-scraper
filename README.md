@@ -1,4 +1,4 @@
-# kairosdb-prometheus-server
+# kairosdb-prometheus-scaper
 A KairosDB plugin that acts as a Prometheus server to scrape metrics from Prometheus clients.
 
 This version has not been optimized for a really large number of clients. Currently it uses a separate thread for each client connection. 
