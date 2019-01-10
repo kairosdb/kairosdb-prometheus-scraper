@@ -3,8 +3,8 @@ A KairosDB plugin that acts as a Prometheus server to scrape metrics from Promet
 
 This version has not been optimized for a really large number of clients. Currently it uses a separate thread for each client connection. 
 
-##Discovery
-Clients that the server scrapes are specified in the configuration file. Each client configuration starts with
+## Discovery
+Currently a simple version of discovery is implemented. Clients that the server scrapes are specified in the configuration file. Each client configuration starts with
  kairosdb.prometheus-server.client.[x] where [x] is a number identifing the client. For example:
  
 ```
