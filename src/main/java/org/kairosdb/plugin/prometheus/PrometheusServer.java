@@ -34,6 +34,13 @@ public class PrometheusServer implements KairosDBService
 	private final org.kairosdb.plugin.prometheus.Discovery discovery;
 	private final ScheduledExecutorService executor;
 	private final Publisher<DataPointEvent> dataPointPublisher;
+	private String m_prefix = "";
+
+
+	public void setPrefix(String prefix)
+	{
+		m_prefix = prefix;
+	}
 
 	@Inject
 	public PrometheusServer(FilterEventBus eventBus, org.kairosdb.plugin.prometheus.Discovery discovery, ScheduledExecutorService executor)
@@ -162,7 +169,7 @@ public class PrometheusServer implements KairosDBService
 		}
 
 		long timestamp = System.currentTimeMillis(); // todo how to get prometheus timestamp
-		dataPointPublisher.post(new DataPointEvent(metricName, builder.build(), new DoubleDataPoint(timestamp, dataPoint)));
+		dataPointPublisher.post(new DataPointEvent(m_prefix + metricName, builder.build(), new DoubleDataPoint(timestamp, dataPoint)));
 	}
 
 	private static String getHostname()
