@@ -8,7 +8,7 @@ import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static org.kairosdb.util.Preconditions.checkNotNullOrEmpty;
+import static org.kairosdb.util.Preconditions.requireNonNullOrEmpty;
 
 public class Client
 {
@@ -17,8 +17,8 @@ public class Client
 
 	public Client(String url, String interval) throws MalformedURLException
 	{
-		checkNotNullOrEmpty(url, "url must not be null or empty");
-		checkNotNullOrEmpty(interval, "interval must not be null or empty");
+		requireNonNullOrEmpty(url, "url must not be null or empty");
+		requireNonNullOrEmpty(interval, "interval must not be null or empty");
 		this.url = new URL(url);
 
 		Pattern regex = Pattern.compile("(\\d+)(.+)");

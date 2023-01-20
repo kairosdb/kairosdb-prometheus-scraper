@@ -1,6 +1,8 @@
 package org.kairosdb.plugin.prometheus;
 
 import com.google.common.collect.ImmutableSortedMap;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import org.junit.Before;
 import org.junit.Test;
 import org.kairosdb.core.datapoints.DoubleDataPoint;
@@ -15,6 +17,7 @@ import java.net.MalformedURLException;
 import java.net.UnknownHostException;
 import java.util.Properties;
 
+import static org.kairosdb.plugin.prometheus.ConfigurationDiscovery.CLIENT_PROPERTY;
 import static org.mockito.Mockito.*;
 import static org.mockito.MockitoAnnotations.initMocks;
 
@@ -41,9 +44,12 @@ public class PrometheusServerTest
 		properties.put("kairosdb.prometheus-server.client.0.url", "file:///" + cwd + "/src/test/resources/timeseries.txt");
 		properties.put("kairosdb.prometheus-server.client.0.scrape-interval", "30s");
 
+		Config config = ConfigFactory.parseString("{ kairosdb.prometheus-server.clients: [{url: \"file:///" + cwd + "/src/test/resources/timeseries.txt\", scrape-interval: \"30s\"}]}");
+
 		TestScheduledExecutorService executor = new TestScheduledExecutorService();
 
-		ConfigurationDiscovery discovery = new ConfigurationDiscovery(properties);
+		ConfigurationDiscovery discovery = new ConfigurationDiscovery();
+		discovery.setConfiguration(config.getList(CLIENT_PROPERTY));
 		PrometheusServer server = new PrometheusServer(mockEventBus, discovery, executor);
 
 		server.start();

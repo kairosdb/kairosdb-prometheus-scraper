@@ -2,35 +2,34 @@ package org.kairosdb.plugin.prometheus;
 
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
+import com.typesafe.config.ConfigList;
+import com.typesafe.config.ConfigObject;
+import com.typesafe.config.ConfigValue;
+import org.kairosdb.core.annotation.InjectProperty;
 
 import java.net.MalformedURLException;
 import java.util.*;
 
 public class ConfigurationDiscovery implements org.kairosdb.plugin.prometheus.Discovery
 {
-	private static final String CLIENT_PROPERTY = "kairosdb.prometheus-server.client.";
+	public static final String CLIENT_PROPERTY = "kairosdb.prometheus-server.clients";
 	private final List<Client> clients = new ArrayList<>();
 
-	@Inject
-	public ConfigurationDiscovery(Properties properties) throws MalformedURLException
+	@InjectProperty(prop = CLIENT_PROPERTY, optional = false)
+	public void setConfiguration(ConfigList clientList) throws MalformedURLException
 	{
-		Set<String> clientNames = new HashSet<>();
-		for (String property : properties.stringPropertyNames())
+		for (ConfigValue configValue : clientList)
 		{
-			if (property.startsWith(CLIENT_PROPERTY))
-			{
-				clientNames.add(property.substring(0, property.lastIndexOf(".")));
+			Map<String, String> client = (Map)configValue.unwrapped();
 
-			}
-		}
-
-		for (String clientName : clientNames)
-		{
 			clients.add(
-					new Client(
-							properties.getProperty(clientName + ".url"),
-							properties.getProperty(clientName + ".scrape-interval")));
+					new Client(client.get("url"), client.get("scrape-interval")));
 		}
+
+	}
+
+	public ConfigurationDiscovery()
+	{
 	}
 
 	@Override
