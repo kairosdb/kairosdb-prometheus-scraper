@@ -7,6 +7,7 @@ import org.hawkular.agent.prometheus.types.*;
 import org.hawkular.agent.prometheus.types.Histogram.Bucket;
 import org.hawkular.agent.prometheus.types.Summary.Quantile;
 import org.kairosdb.core.KairosDBService;
+import org.kairosdb.core.annotation.InjectProperty;
 import org.kairosdb.core.datapoints.DoubleDataPoint;
 import org.kairosdb.core.http.rest.json.RelativeTime;
 import org.kairosdb.eventbus.FilterEventBus;
@@ -37,6 +38,7 @@ public class PrometheusServer implements KairosDBService
 	private String m_prefix = "";
 
 
+	@InjectProperty(prop = "kairosdb.prometheus-server.prefix", optional = true)
 	public void setPrefix(String prefix)
 	{
 		m_prefix = prefix;
