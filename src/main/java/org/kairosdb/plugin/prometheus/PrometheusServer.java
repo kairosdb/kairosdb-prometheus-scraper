@@ -17,8 +17,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.List;
 import java.util.Map.Entry;
@@ -32,10 +30,11 @@ public class PrometheusServer implements KairosDBService
 {
 	private static final Logger logger = LoggerFactory.getLogger(PrometheusServer.class);
 
-	private final org.kairosdb.plugin.prometheus.Discovery discovery;
-	private final ScheduledExecutorService executor;
-	private final Publisher<DataPointEvent> dataPointPublisher;
+	private final org.kairosdb.plugin.prometheus.Discovery m_discovery;
+	private final ScheduledExecutorService m_executor;
+	private final Publisher<DataPointEvent> m_dataPointPublisher;
 	private String m_prefix = "";
+	private int m_ttl = 0;
 
 
 	@InjectProperty(prop = "kairosdb.prometheus-server.prefix", optional = true)
@@ -44,25 +43,33 @@ public class PrometheusServer implements KairosDBService
 		m_prefix = prefix;
 	}
 
+	@InjectProperty(prop = "kairosdb.prometheus-server.ttl", optional = true)
+	public void setTtl(int ttl)
+	{
+		m_ttl = ttl;
+	}
+
+
+
 	@Inject
 	public PrometheusServer(FilterEventBus eventBus, org.kairosdb.plugin.prometheus.Discovery discovery, ScheduledExecutorService executor)
 	{
 		checkNotNull(eventBus, "eventBus must not be null");
-		this.discovery = checkNotNull(discovery, "discovery must not be null");
-		this.executor = checkNotNull(executor, "executor must not be null");
-		this.dataPointPublisher = eventBus.createPublisher(DataPointEvent.class);
+		this.m_discovery = checkNotNull(discovery, "discovery must not be null");
+		this.m_executor = checkNotNull(executor, "executor must not be null");
+		this.m_dataPointPublisher = eventBus.createPublisher(DataPointEvent.class);
 	}
 
 	@Override
 	public void start()
 	{
 		logger.info("Starting prometheus discovery");
-		for (Client client : discovery.getClients())
+		for (Client client : m_discovery.getClients())
 		{
 			RelativeTime interval = client.getInterval();
 			logger.info("Prometheus discovery: Scheduling client " + client.getUrl());
-			executor.scheduleWithFixedDelay(
-					new ProcessMetrics(client.getUrl()),
+			m_executor.scheduleWithFixedDelay(
+					new ProcessMetrics(client),
 					interval.getValue(),
 					interval.getValue(),
 					TimeUnit.valueOf(interval.getUnit().name()));
@@ -76,13 +83,14 @@ public class PrometheusServer implements KairosDBService
 
 	private class ProcessMetrics implements Runnable
 	{
-		private PrometheusScraper scraper;
-		private URL url;
+		private PrometheusScraper m_scraper;
+		private Client m_client;
+		private long m_scrapeTime;
 
-		ProcessMetrics(URL url)
+		ProcessMetrics(Client client)
 		{
-			this.url = url;
-			scraper = new PrometheusScraper(url);
+			m_client = client;
+			m_scraper = new PrometheusScraper(m_client.getUrl());
 		}
 
 		@Override
@@ -91,7 +99,9 @@ public class PrometheusServer implements KairosDBService
 			List<MetricFamily> scrape;
 			try
 			{
-				scrape = scraper.scrape();
+				scrape = m_scraper.scrape();
+
+				m_scrapeTime = System.currentTimeMillis();
 
 				for (MetricFamily metricFamily : scrape)
 				{
@@ -105,8 +115,8 @@ public class PrometheusServer implements KairosDBService
 							{
 								addDataPoint(metric, quantile.getValue(), "quantile", Double.toString(quantile.getQuantile()));
 							}
-							addDataPoint(metric, metric.getName() + "_count", summary.getSampleCount());
 							addDataPoint(metric, metric.getName() + "_sum", summary.getSampleSum());
+							addDataPoint(metric, metric.getName() + "_count", summary.getSampleCount());
 						}
 						else if (metricFamily.getType() == MetricType.COUNTER)
 						{
@@ -130,53 +140,46 @@ public class PrometheusServer implements KairosDBService
 			}
 			catch (IOException e)
 			{
-				logger.error("Failed to scrape " + url, e);
+				logger.error("Failed to scrape " + m_client.getUrl(), e);
 			}
 		}
-	}
 
-	private void addDataPoint(Metric metric, double dataPoint)
-			throws UnknownHostException
-	{
-		addDataPoint(metric, dataPoint, null, null);
-	}
-
-	private void addDataPoint(Metric metric, String metricName, double dataPoint)
-			throws UnknownHostException
-	{
-		addDataPoint(metric, metricName, dataPoint, null, null);
-	}
-
-	private void addDataPoint(Metric metric, double dataPoint, String tagName, String tagValue)
-			throws UnknownHostException
-	{
-		addDataPoint(metric, null, dataPoint, tagName, tagValue);
-	}
-
-	private void addDataPoint(Metric metric, String metricName, double dataPoint, String tagName, String tagValue)
-			throws UnknownHostException
-	{
-		metricName = metricName != null ? metricName : metric.getName();
-		ImmutableSortedMap.Builder<String, String> builder = ImmutableSortedMap.naturalOrder();
-
-		builder.put("host", getHostname()); // todo what host should this really be? Get from url?
-		for (Entry<String, String> tag : metric.getLabels().entrySet())
+		private void addDataPoint(Metric metric, double dataPoint)
+				throws UnknownHostException
 		{
-			builder.put(tag.getKey(), tag.getValue());
+			addDataPoint(metric, dataPoint, null, null);
 		}
 
-		if (tagName != null && tagValue != null)
+		private void addDataPoint(Metric metric, String metricName, double dataPoint)
+				throws UnknownHostException
 		{
-			builder.put(tagName, tagValue);
+			addDataPoint(metric, metricName, dataPoint, null, null);
 		}
 
-		long timestamp = System.currentTimeMillis(); // todo how to get prometheus timestamp
-		dataPointPublisher.post(new DataPointEvent(m_prefix + metricName, builder.build(), new DoubleDataPoint(timestamp, dataPoint)));
-	}
+		private void addDataPoint(Metric metric, double dataPoint, String tagName, String tagValue)
+				throws UnknownHostException
+		{
+			addDataPoint(metric, null, dataPoint, tagName, tagValue);
+		}
 
-	private static String getHostname()
-			throws UnknownHostException
-	{
-		return InetAddress.getLocalHost().getHostName();
+		private void addDataPoint(Metric metric, String metricName, double dataPoint, String tagName, String tagValue)
+				throws UnknownHostException
+		{
+			metricName = metricName != null ? metricName : metric.getName();
+			ImmutableSortedMap.Builder<String, String> builder = ImmutableSortedMap.naturalOrder();
+
+			builder.putAll(m_client.getTags());
+			for (Entry<String, String> tag : metric.getLabels().entrySet())
+			{
+				builder.put(tag.getKey(), tag.getValue());
+			}
+
+			if (tagName != null && tagValue != null)
+			{
+				builder.put(tagName, tagValue);
+			}
+
+			m_dataPointPublisher.post(new DataPointEvent(m_prefix + metricName, builder.build(), new DoubleDataPoint(m_scrapeTime, dataPoint), m_ttl));
+		}
 	}
 }

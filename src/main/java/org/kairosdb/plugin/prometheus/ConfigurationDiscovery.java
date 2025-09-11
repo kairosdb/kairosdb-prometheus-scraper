@@ -2,6 +2,7 @@ package org.kairosdb.plugin.prometheus;
 
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
+import com.typesafe.config.Config;
 import com.typesafe.config.ConfigList;
 import com.typesafe.config.ConfigObject;
 import com.typesafe.config.ConfigValue;
@@ -20,10 +21,16 @@ public class ConfigurationDiscovery implements org.kairosdb.plugin.prometheus.Di
 	{
 		for (ConfigValue configValue : clientList)
 		{
-			Map<String, String> client = (Map)configValue.unwrapped();
+			//It seems I can pass anything for the path and it will work as the
+			//object in the list has no key
+			Config config = configValue.atPath("this");
+			String url = config.getString("this.url");
+			String interval = config.getString("this.scrape-interval");
+			Map<String, String> tags = Map.of();
+			if (config.hasPath("this.tags"))
+				tags = (Map<String, String>) config.getValue("this.tags").unwrapped();
 
-			clients.add(
-					new Client(client.get("url"), client.get("scrape-interval")));
+			clients.add(new Client(url, interval, tags));
 		}
 
 	}

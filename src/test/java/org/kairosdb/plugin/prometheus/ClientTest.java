@@ -6,6 +6,7 @@ import org.kairosdb.core.http.rest.json.RelativeTime;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Map;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
@@ -15,7 +16,7 @@ public class ClientTest
 	@Test
 	public void test_constructor() throws MalformedURLException
 	{
-		Client client = new Client("http://foo.bar", "10m");
+		Client client = new Client("http://foo.bar", "10m", Map.of());
 
 		assertThat(client.getUrl(), equalTo(new URL("http://foo.bar")));
 		assertThat(client.getInterval(), equalTo(new RelativeTime(10, TimeUnit.MINUTES)));
@@ -24,7 +25,7 @@ public class ClientTest
 	@Test(expected = IllegalArgumentException.class)
 	public void test_constructor_invalidInterval() throws MalformedURLException
 	{
-		Client client = new Client("http://foo.bar", "10u");
+		Client client = new Client("http://foo.bar", "10u", Map.of());
 
 		assertThat(client.getInterval(), equalTo(new RelativeTime(10, TimeUnit.MINUTES)));
 	}
